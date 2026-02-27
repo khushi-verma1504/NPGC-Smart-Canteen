@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "576848933703",
+    "project_id": "npgc-smart-canteen",
+    "storage_bucket": "npgc-smart-canteen.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:576848933703:android:c01ce4964259b4aac01262",
+        "android_client_info": {
+          "package_name": "com.example.npgc_smart_canteen"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "576848933703-qdqj9tsc727qdstbl6gipfbrcd7eo2ad.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.npgc_smart_canteen",
+            "certificate_hash": "827e28b5b5e9b9a9e3f9e07a2d7199b1446028eb"
+          }
+        },
+        {
+          "client_id": "576848933703-4cqpgmiqn8dv6vbdj5gpnjea6qh8n76j.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDbKWyqYKggWpzAyZKy7UNGkxHyr9qn1Bc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "576848933703-4cqpgmiqn8dv6vbdj5gpnjea6qh8n76j.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
