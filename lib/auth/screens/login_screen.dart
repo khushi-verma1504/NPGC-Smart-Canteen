@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:npgc_smart_canteen/auth/screens//forms/staff_login_form.dart';
-import 'package:npgc_smart_canteen/auth/screens//forms/student_email_form.dart';
-import 'package:npgc_smart_canteen/auth/screens//forms/student_phone_form.dart';
-import 'package:npgc_smart_canteen/auth/screens/forms/admin_login_form.dart';
-import 'package:npgc_smart_canteen/auth/screens/forms/formwidgets/login_method.dart';
-import 'package:npgc_smart_canteen/auth/screens/forms/formwidgets/profile_icon.dart';
-import 'package:npgc_smart_canteen/auth/screens/forms/formwidgets/role_selector.dart';
-import 'package:npgc_smart_canteen/auth/screens/forms/social_login_form.dart';
-
+import 'package:npgc_smart_canteen/auth/forms/staff_login_form.dart';
+import 'package:npgc_smart_canteen/auth/forms/student_email_form.dart';
+import 'package:npgc_smart_canteen/auth/forms/student_phone_form.dart';
+import 'package:npgc_smart_canteen/auth/forms/admin_login_form.dart';
+import 'package:npgc_smart_canteen/auth/formwidgets/login_method.dart';
+import 'package:npgc_smart_canteen/auth/formwidgets/profile_icon.dart';
+import 'package:npgc_smart_canteen/auth/formwidgets/role_selector.dart';
+import 'package:npgc_smart_canteen/auth/forms/social_login_form.dart';
+import 'package:npgc_smart_canteen/auth/screens/phone_otp_screen.dart';
+import 'package:npgc_smart_canteen/auth/screens/signup_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:npgc_smart_canteen/services/auth_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -23,6 +27,184 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController empidController = TextEditingController();
   final TextEditingController adminidController = TextEditingController();
+  String? _verificationId;
+
+  Future<String?> getPhoneFromEmpId(String empid) async {
+    final query = await FirebaseFirestore.instance
+        .collection('staff')
+        .where('empid', isEqualTo: empid)
+        .get();
+
+    if (query.docs.isNotEmpty) {
+      return query.docs.first['phone'];
+    }
+    return null;
+  }
+
+  Future<String?> getPhoneFromAdminId(String adminId) async {
+    final query = await FirebaseFirestore.instance
+        .collection('admin')
+        .where('adminId', isEqualTo: adminId)
+        .get();
+
+    if (query.docs.isNotEmpty) {
+      return query.docs.first['phone'];
+    }
+    return null;
+  }
+
+  Future<void> _handleStudentEmailLogin() async {
+    String email = emailController.text.trim();
+    String password = passController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Fields cannot be empty"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    try {
+      final userCredential =
+      await AuthService().signInWithEmail(email, password);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Logged In Successfully!"),
+        backgroundColor: Colors.orange,)
+      );
+      //Navigator.pushReplacement(
+      //  context,
+       // MaterialPageRoute(builder: (_) => StudentHomeScreen()),
+     // );
+
+    } on FirebaseAuthException catch (e) {
+      String message = "Login failed";
+
+      if (e.code == 'user-not-found') {
+        message = "No user found with this email";
+      } else if (e.code == 'wrong-password') {
+        message = "Incorrect password";
+      } else if (e.code == 'invalid-email') {
+        message = "Invalid email format";
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    }
+  }
+
+  Future<void> _handleAdminLogin() async {
+    String adminId = adminidController.text.trim();
+
+    String? phone = await getPhoneFromAdminId(adminId);
+
+    if (phone == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Invalid Admin ID")),
+      );
+      return;
+    }
+
+    await AuthService().verifyPhoneNumber(
+      phoneNumber: "+91$phone",
+
+      codeSent: (verificationId) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => OtpScreen(verificationId: verificationId),
+          ),
+        );
+      },
+
+      verificationFailed: (error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error)),
+        );
+      },
+    );
+  }
+  Future<void> _handleStaffLogin() async {
+    String empid = empidController.text.trim();
+
+    String? phone = await getPhoneFromEmpId(empid);
+
+    if (phone == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Invalid Employee ID")),
+      );
+      return;
+    }
+
+    await AuthService().verifyPhoneNumber(
+      phoneNumber: "+91$phone",
+
+      codeSent: (verificationId) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => OtpScreen(verificationId: verificationId),
+          ),
+        );
+      },
+
+      verificationFailed: (error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error)),
+        );
+      },
+    );
+  }
+  Future<void> _verifyPhoneNumber() async {
+    String phone = phoneController.text.trim();
+
+    if (phone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Enter phone number"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    await FirebaseAuth.instance.verifyPhoneNumber(
+      phoneNumber: "+91$phone", // India
+      verificationCompleted: (PhoneAuthCredential credential) async {
+        await FirebaseAuth.instance.signInWithCredential(credential);
+
+       // Navigator.pushReplacement(
+        //  context,
+        //  MaterialPageRoute(builder: (_) => StudentHomeScreen()),
+       // );
+      },
+      verificationFailed: (FirebaseAuthException e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message ?? "Verification failed"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      },
+      codeSent: (String verificationId, int? resendToken) {
+        _verificationId = verificationId;
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => OtpScreen(verificationId: verificationId),
+          ),
+        );
+      },
+      codeAutoRetrievalTimeout: (String verificationId) {
+        _verificationId = verificationId;
+      },
+    );
+  }
+
   @override
   void dispose() {
     emailController.dispose();
@@ -77,13 +259,13 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
             if(selectedRole == "Student" && selectedMethod == "Email")
-               StudentEmailLoginForm(emailController: emailController, passController: passController,)
+               StudentEmailLoginForm(emailController: emailController, passController: passController, onLogin: _handleStudentEmailLogin,)
             else if(selectedRole == "Student" && selectedMethod == "Phone")
-              StudentPhoneLoginForm(phoneController: phoneController, passController: passController)
+              StudentPhoneLoginForm(phoneController: phoneController, passController: passController, onVerifyPhone: _verifyPhoneNumber,)
             else if(selectedRole=='Staff')
-              StaffLoginForm(nameController: nameController, empidController: empidController)
+              StaffLoginForm(nameController: nameController, empidController: empidController, onVerifyPhone: _handleStaffLogin,)
             else
-              AdminLogin(adminidController: adminidController),
+              AdminLogin(adminidController: adminidController,onVerifyPhone: _handleAdminLogin,),
             SocialLogin(),
             SizedBox(height: 15,),
             TextButton(
@@ -96,7 +278,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               onPressed: (){
-
+                Navigator.push(context, MaterialPageRoute(builder: (context) => SignUpScreen()),
+                );
               },
               child: const Text("Don't have an Account? SignUp"),
             )

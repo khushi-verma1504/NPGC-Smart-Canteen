@@ -1,17 +1,19 @@
 import 'package:flutter/cupertino.dart';
-import 'package:npgc_smart_canteen/auth/screens//forms/formwidgets/login_button.dart';
-import 'package:npgc_smart_canteen/auth/screens//forms/formwidgets/profile_name_field.dart';
+import 'package:npgc_smart_canteen/auth/formwidgets/loginsignup_button.dart';
+import 'package:npgc_smart_canteen/auth/formwidgets/profile_name_field.dart';
 import 'package:flutter/material.dart';
-import 'package:npgc_smart_canteen/auth/screens//forms/formwidgets/staff_employment_id.dart';
+import 'package:npgc_smart_canteen/auth/formwidgets/staff_employment_id.dart';
 
 class StaffLoginForm extends StatelessWidget{
   final TextEditingController nameController;
   final TextEditingController empidController;
+  final VoidCallback onVerifyPhone;
 
   const StaffLoginForm({
     super.key,
     required this.nameController,
     required this.empidController,
+    required this.onVerifyPhone,
   });
   @override
   Widget build(BuildContext context) {
@@ -46,7 +48,7 @@ class StaffLoginForm extends StatelessWidget{
               ),
               child: StaffEmpId(empidController: empidController)
           ),
-          LoginPhoneButton()
+          LoginPhoneButton(onVerifyPhone: onVerifyPhone,)
         ],
       ),
     );

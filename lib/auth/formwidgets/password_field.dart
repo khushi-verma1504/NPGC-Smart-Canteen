@@ -22,7 +22,7 @@ class _PasswordFieldState extends State<PasswordField>{
         children: [
           Padding(
             padding: const EdgeInsets.only(left: 30),
-            child: Text('Enter Your Password:', style: Theme.of(context).textTheme.titleMedium),
+            child: Text('Enter Password:', style: Theme.of(context).textTheme.titleMedium),
           ),
           Container(
             margin: EdgeInsets.only(left: 10, top: 5, right: 10),
